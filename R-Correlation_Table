@@ -147,3 +147,45 @@ corr_plot <- ggcorrplot(df_cor,
                           plot.title = element_text(family = "Times New Roman", size = 16, face = "bold")
                         ))
 print(corr_plot)
+
+# 8. b Más színnel 
+# állítható betűtípussal, és mérettel
+# Korrelációs mátrix létrehozása
+df_num <- df %>% dplyr::select(where(is.numeric))
+
+df_cor <- cor(df_num, use = "complete.obs")
+corr_plot <- ggcorrplot(df_cor,
+                        lab = TRUE,
+                        lab_size = 5,
+                        colors = c("red", "white","green"),
+                        ggtheme = ggplot2::theme(
+                          text = element_text(family = "Times New Roman", size = 14),
+                          axis.text = element_text(family = "Times New Roman", size = 14),
+                          axis.title = element_text(family = "Times New Roman", size = 14),
+                          plot.title = element_text(family = "Times New Roman", size = 16, face = "bold")
+                        ))
+print(corr_plot)
+# 8. c üres mezők ahol nincs sig. 
+df_num <- df %>% dplyr::select(where(is.numeric))
+
+df_cor <- cor(df_num, use = "complete.obs")
+p.mat <- cor_pmat(df_num)
+
+corr_plot <- ggcorrplot(
+  df_cor,
+  p.mat = p.mat,
+  insig = "blank",          # nem szignifikáns mezők üresek
+  sig.level = 0.05,
+  lab = TRUE,
+  lab_size = 5,
+  colors = c("blue", "white", "red"),
+  ggtheme = ggplot2::theme_minimal(base_family = "Times New Roman", base_size = 14)
+) +
+  theme(
+    text = element_text(family = "Times New Roman", size = 14),
+    axis.text = element_text(family = "Times New Roman", size = 14),
+    axis.title = element_text(family = "Times New Roman", size = 14),
+    plot.title = element_text(family = "Times New Roman", size = 16, face = "bold")
+  )
+
+print(corr_plot)
