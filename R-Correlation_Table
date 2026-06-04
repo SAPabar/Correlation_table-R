@@ -2,7 +2,7 @@
 # FACE2021 kísérleti adatok importálása, tisztítása, elemzése  
 # Fájl: df <- read_excel("FACE 2019.xlsx")  
 # Szerző: Pabar Sándor Attila & Kelemen Bettina
-# Dátum: 2026.05.28.  
+# Dátum: 2026.06.04.  
 # =====================================================
 
 # 1. KÖNYVTÁRAK betöltése  
@@ -79,7 +79,7 @@ setwd("C:/Users/pabar.sandor/Saját meghajtó/Könyvtár/Tudományos tevékenys�
 getwd()              # Ellenőrizd, hogy jó helyen vagy-e
 
 # 3. Fájl kiválasztása
-df <- read_excel("FACE 2019.xlsx")
+df <- read_excel("FACE 2019_2.xlsx")
 
 # 4. Adat szűkítés, ha csak bizonyos sorok kellenek.
 df <- df[c(3:26),]
@@ -130,7 +130,7 @@ print(head(df))
 df_cor<-corr_coef(df)
 plot(df_cor)
 
-# 8. # MÜKÖDIK, DE NEM TETSZIK. NINCS CSILLAG, és nem olyan mint az előző. 
+# 8a. # MÜKÖDIK, DE NEM TETSZIK. NINCS CSILLAG, és nem olyan mint az előző. 
 # állítható betűtípussal, és mérettel
 # Korrelációs mátrix létrehozása
 df_num <- df %>% dplyr::select(where(is.numeric))
@@ -139,7 +139,7 @@ df_cor <- cor(df_num, use = "complete.obs")
 corr_plot <- ggcorrplot(df_cor,
                         lab = TRUE,
                         lab_size = 5,
-                        colors = c("blue", "white", "red"),
+                        colors = c("red", "white", "blue"),
                         ggtheme = ggplot2::theme(
                           text = element_text(family = "Times New Roman", size = 14),
                           axis.text = element_text(family = "Times New Roman", size = 14),
@@ -148,7 +148,7 @@ corr_plot <- ggcorrplot(df_cor,
                         ))
 print(corr_plot)
 
-# 8. b Más színnel 
+# 8b. Más színnel 
 # állítható betűtípussal, és mérettel
 # Korrelációs mátrix létrehozása
 df_num <- df %>% dplyr::select(where(is.numeric))
@@ -165,7 +165,8 @@ corr_plot <- ggcorrplot(df_cor,
                           plot.title = element_text(family = "Times New Roman", size = 16, face = "bold")
                         ))
 print(corr_plot)
-# 8. c üres mezők ahol nincs sig. 
+
+# 8c. üres mezők ahol nincs sig. 
 df_num <- df %>% dplyr::select(where(is.numeric))
 
 df_cor <- cor(df_num, use = "complete.obs")
@@ -178,7 +179,7 @@ corr_plot <- ggcorrplot(
   sig.level = 0.05,
   lab = TRUE,
   lab_size = 5,
-  colors = c("blue", "white", "red"),
+  colors = c("red", "white", "blue"),
   ggtheme = ggplot2::theme_minimal(base_family = "Times New Roman", base_size = 14)
 ) +
   theme(
