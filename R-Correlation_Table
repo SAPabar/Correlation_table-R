@@ -106,7 +106,7 @@ str(df)
 desired_columns <- c("Gyökér biomassza", "WR teljes gyökérhossz", "WR gyökér felszín", "WR átl gyökér átmérő", "Hajtás biomassza", "CCI", "FvFm", "Levélfelület", "Termésadatok", "CR", "Gyökér/Hajtás", "Hossz/Tömeg") #Első és utolsó oszlopod nevének a megadása. Ugyanaz mint a numerikus adatok megadásánál.
 
 # Új nevek megadása az oszlopoknak
-new_column_names <- c("Gyökér biomassza", "WR hossz", "WR  felszín", "WR átmérő)", "Hajtás tömeg", "CCI", "Fv/Fm", "Levélfelület", "Termés", "CR", "Gyökér/Hajtás", "Hossz/tömeg")
+new_column_names <- c("Gyökér biomassza", "WR hossz", "WR  felszín", "WR átmérő", "Hajtás tömeg", "CCI", "Fv/Fm", "Levélfelület", "Termés", "CR", "Gyökér/Hajtás", "Hossz/tömeg")
 
 # Ellenőrizzük, hogy a hosszúságuk megegyezik-e
 if (length(desired_columns) == length(new_column_names)) {
