@@ -1,3 +1,14 @@
+# =====================================================  
+# FACE2021 kísérleti adatok importálása, tisztítása, elemzése  
+# Fájl: df <- read_excel("FACE 2019.xlsx")  
+# Szerző: Pabar Sándor Attila & Kelemen Bettina
+# Dátum: 2026.06.04.  
+# =====================================================
+
+# 1. KÖNYVTÁRAK betöltése  
+install.packages("readxl") # Excel fájlok beolvasásához (xlsx, xls)
+install.packages("janitor")  # Oszlopnevek tisztítása, ellenőrzés  
+install.packages("readr") # Egységes dátum/numerikus formátumkezelés
 install.packages("agricolae")
 install.packages("tidyverse") # vannak package-ek amik sok más packaget tartalmaznak. A tidyverse is ilyen. A packagek egyéni funkciójáról később.
 install.packages("metan")
@@ -23,6 +34,9 @@ install.packages("extrafont")
 install.packages("forcats")
 install.packages("ggcorrplot")
 
+library(readxl) # Excel fájlok beolvasásához (xlsx, xls)  
+library(janitor) # Oszlopnevek tisztítása, ellenőrzés  
+library(readr)    # Egységes dátum/numerikus formátumkezelés
 library(agricolae)
 library(tidyverse)
 library(metan)
@@ -56,114 +70,123 @@ library(ggcorrplot)
 
 # Importáld az összes telepített betűtípust
 font_import()
-
 # Töltsd be az importált betűtípusokat
 loadfonts(device = "win")  # Windows rendszer esetén
 
+# 2. MUNKAKÖNYVTÁR beállítása
 # hely ahol a kpk.csv fájl van, hogy abból dolgozzak
-setwd("G:/Saját meghajtó/Könyvtár/Tananyag/2017- PhD/Statisztika/PSA Kiértékelés/KPK")
-# adat kijelölés
-kpk=read.csv2(file="kpk.csv") # fájl kiválasztása és elnevezése 
+setwd("C:/Users/pabar.sandor/Saját meghajtó/Könyvtár/Tudományos tevékenység/Cikk/Folyamatban lévő cikkek/20260331 Hargitai - FACE/PCA - Kelemen Betti adatainak az elemzése")
+getwd()              # Ellenőrizd, hogy jó helyen vagy-e
 
-# Factor beállítása a megfelelő sorrendre
-kpk$Kezeles <- factor(kpk$Kezeles, levels = c("Kontroll", "Alginit", "Mulcs", "Takaronoveny"))
-kpk$Oltoanyag <- factor(kpk$Oltoanyag, levels = c("Kontroll", "Oltoanyag"))
-kpk$Year <- factor(kpk$Year, levels = c("2019", "2020", "2021"))
+# 3. Fájl kiválasztása
+df <- read_excel("FACE 2019_2.xlsx")
 
-# Példa ha máshogy kéne tk5$talaj<-as.factor(tk5$talaj)
+# 4. Adat szűkítés, ha csak bizonyos sorok kellenek.
+df <- df[c(3:26),]
+# 5. ADATTÍPUSOK optimalizálása (faktorok, numerikusok) # Ezzel van amelyik kódot átnvezzük: N ->Nemere
+df <- df %>%
+  mutate(
+    # Kategória változók faktorrá alakítása (ANOVA-hoz)
+    co2_level = factor(co2_level, levels = c("FACE", "Kontrol")),
+    n_level = factor(n_level, levels = c("High", "Low")),
+    cultivar = factor(cultivar, levels = c("Nemere", "Dandár")), 
+    
+    # Minden többi numerikusra (hullámhosszak, kémiai paraméterek)
+    across(c("Gyökér biomassza":"Hossz/Tömeg"), as.numeric),
+    
+    # sample_i megtartása karakterként (mintaazonosító)
+    sample_i = as.character("2019")
+  )
+# ellenőrzés
+str(df)
 
-# Year
-# Ellenőrizd a faktorszintek sorrendjét
-levels(kpk$Year)
 
-# Kezeles
-kpk <- kpk %>%
-  mutate(Kezeles = fct_recode(Kezeles,
-                               "Kontroll" = "Kontroll",
-                               "Alginit" = "Alginit",
-                               "Mulcs" = "Mulcs",
-                               "Takarónövény" = "Takaronoveny"))
-# Ellenőrizd a változást
-levels(kpk$Kezeles)
-# Sorrend beállítás
-kpk <- kpk %>%
-  mutate(Kezeles = fct_relevel(Kezeles, "Kontroll", "Alginit", "Mulcs", "Takarónövény"))
-# Ellenőrizd a faktorszintek sorrendjét # unique(kpk$Kezeles) Ezzel is lehet ellenőrizni
-levels(kpk$Kezeles)
-
-# oltóanyag
-kpk <- kpk %>%
-  mutate(Oltoanyag = fct_recode(Oltoanyag,
-                            "Kontroll" = "Kontroll",
-                            "Oltóanyag" = "Oltoanyag"))
-# Ellenőrizd a változást
-levels(tk5$Oltoanyag)
-
-         
-# tisztázott adatok kijelölése: kpk 2019-21-es 0-20cm-es adatok.
-# kpk 2019-21-es 0-20cm-es adatok.
-kpk1921<-kpk[c(13:60,133:156),]
-# Év változó faktorrá alakítása
-kpk1921$Year <- as.factor(kpk1921$Year)
-# -------
-# kpk 2020-21-es 0-10, 10-20cm-es adatok.
-kpk2021<-kpk[c(85:132,157:204),]
-# Év változó faktorrá alakítása
-kpk2021$Year <- as.factor(kpk2021$Year)
-# -------
-# kpk 2021-es 0-10cm-es adatok.
-kpk21010<-kpk[c(157:180),]
-
-# -------------------------
+# 6. Oszlopok kiválasztása amikkel dolgozunk és átnevezés -------------------------
 # Kívánt oszlopok nevei
-desired_columns <- c("Normalized.Yield", "POXC", "atlag.Abs.NaF", "atlag.Abs.NaOH", "DOC.mgkg", "Glomalin.mgg", "N", "TOC", "CN")
+desired_columns <- c("Gyökér biomassza", "WR teljes gyökérhossz", "WR gyökér felszín", "WR átl gyökér átmérő", "Hajtás biomassza", "CCI", "FvFm", "Levélfelület", "Termésadatok", "CR", "Gyökér/Hajtás", "Hossz/Tömeg") #Első és utolsó oszlopod nevének a megadása. Ugyanaz mint a numerikus adatok megadásánál.
 
 # Új nevek megadása az oszlopoknak
-new_column_names <- c("Termés", "POXC", "NaF(C)", "NaOH(C)", "DOC", "Glomalin", "N%", "TOC%", "C/N arány")
+new_column_names <- c("Gyökér biomassza", "WR hossz", "WR  felszín", "WR átmérő", "Hajtás tömeg", "CCI", "Fv/Fm", "Levélfelület", "Termés", "CR", "Gyökér/Hajtás", "Hossz/tömeg")
 
 # Ellenőrizzük, hogy a hosszúságuk megegyezik-e
 if (length(desired_columns) == length(new_column_names)) {
   # Csak a ténylegesen létező oszlopokat nevezzük át
-  existing_columns <- colnames(kpk)[colnames(kpk) %in% desired_columns]
-  existing_new_names <- new_column_names[desired_columns %in% colnames(kpk)]
+  existing_columns <- colnames(df)[colnames(df) %in% desired_columns]
+  existing_new_names <- new_column_names[desired_columns %in% colnames(df)]
   
   # Az oszlopok átnevezése
-  colnames(kpk)[colnames(kpk) %in% existing_columns] <- existing_new_names
+  colnames(df)[colnames(df) %in% existing_columns] <- existing_new_names
   
   # Ellenőrzés céljából kiírhatod az új oszlopneveket
-  print(colnames(kpk))
+  print(colnames(df))
   
 } else {
   warning("A jelenlegi és az új változónevek száma nem egyezik meg.")
 }
 
-# Adatok kiválasztása a 1921 0-20 cm-es adatokhoz csak a kívánt oszlopokkal
-kpk4 <- kpk[c(13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 133, 135, 137, 139, 141, 143, 145, 147, 149, 151, 153, 155), new_column_names]
+print(head(df))
 
-# Ellenőrizzük az eredményt
-print(head(kpk4))
+# 7. korreláció vizsgálat
+df_cor<-corr_coef(df)
+plot(df_cor)
 
-# korreláció vizsgálat
-kpk4_cor<-corr_coef(kpk4)
-plot(kpk4_cor)
-
-
-# MÜKÖDIK, DE NEM TETSZIK. NINCS CSILLAG
+# 8a. # MÜKÖDIK, DE NEM TETSZIK. NINCS CSILLAG, és nem olyan mint az előző. 
 # állítható betűtípussal, és mérettel
 # Korrelációs mátrix létrehozása
-kpk4_cor <- cor(kpk4, use = "complete.obs")
-# Korrelációs plot készítése
-corr_plot <- ggcorrplot(kpk4_cor, 
-                        lab = TRUE, 
-                        lab_size = 5,         # Betűméret beállítása
-                        colors = c("blue", "white", "red"), 
+df_num <- df %>% dplyr::select(where(is.numeric))
+
+df_cor <- cor(df_num, use = "complete.obs")
+corr_plot <- ggcorrplot(df_cor,
+                        lab = TRUE,
+                        lab_size = 5,
+                        colors = c("red", "white", "blue"),
                         ggtheme = ggplot2::theme(
-                          text = element_text(family = "Times New Roman", size = 14),  # Betűtípus és betűméret beállítása
+                          text = element_text(family = "Times New Roman", size = 14),
                           axis.text = element_text(family = "Times New Roman", size = 14),
                           axis.title = element_text(family = "Times New Roman", size = 14),
                           plot.title = element_text(family = "Times New Roman", size = 16, face = "bold")
-                        )
-)
+                        ))
+print(corr_plot)
 
-# Plot megjelenítése
+# 8b. Más színnel 
+# állítható betűtípussal, és mérettel
+# Korrelációs mátrix létrehozása
+df_num <- df %>% dplyr::select(where(is.numeric))
+
+df_cor <- cor(df_num, use = "complete.obs")
+corr_plot <- ggcorrplot(df_cor,
+                        lab = TRUE,
+                        lab_size = 5,
+                        colors = c("red", "white","green"),
+                        ggtheme = ggplot2::theme(
+                          text = element_text(family = "Times New Roman", size = 14),
+                          axis.text = element_text(family = "Times New Roman", size = 14),
+                          axis.title = element_text(family = "Times New Roman", size = 14),
+                          plot.title = element_text(family = "Times New Roman", size = 16, face = "bold")
+                        ))
+print(corr_plot)
+
+# 8c. üres mezők ahol nincs sig. 
+df_num <- df %>% dplyr::select(where(is.numeric))
+
+df_cor <- cor(df_num, use = "complete.obs")
+p.mat <- cor_pmat(df_num)
+
+corr_plot <- ggcorrplot(
+  df_cor,
+  p.mat = p.mat,
+  insig = "blank",          # nem szignifikáns mezők üresek
+  sig.level = 0.05,
+  lab = TRUE,
+  lab_size = 5,
+  colors = c("red", "white", "blue"),
+  ggtheme = ggplot2::theme_minimal(base_family = "Times New Roman", base_size = 14)
+) +
+  theme(
+    text = element_text(family = "Times New Roman", size = 14),
+    axis.text = element_text(family = "Times New Roman", size = 14),
+    axis.title = element_text(family = "Times New Roman", size = 14),
+    plot.title = element_text(family = "Times New Roman", size = 16, face = "bold")
+  )
+
 print(corr_plot)
